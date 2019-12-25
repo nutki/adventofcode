@@ -1,0 +1,408 @@
+const freq = v => { const r = {}; for(i of v) r[i] = (r[i] || 0) + 1; return r }
+const sort = (a, f = v => v) => Array.from(a).sort((a, b) => {
+    const av = f(a), bv = f(b);
+    return av > bv ? 1 : av < bv ? -1 : 0;
+})
+const freqa = v => sort(Array.from(Object.entries(freq(v))), c => -c[1])
+const parse = (it, p) => {
+    const res = [];
+    for (const [_, ...m] of it.matchAll(p)) {
+        res.push(m.map(e => e.match(/^-?[1-9]\d{0,15}$|^0$/) ? parseInt(e) : e));
+    }
+    return res.map(m => m.length === 1 ? m[0] : m);
+}
+const caseParse = (it, ...c) => {
+    for (let [p, f] of c) {
+        for (let v of parse(it, p)) {
+            return f(v);
+        }
+    }
+    return undefined;
+}
+const seq = n => Array.from(new Array(n).keys());
+function * perm(a, ll) {
+    const aa = Array.from(a);
+    const l = ll === undefined ? aa.length : Math.min(ll, aa.length);
+    const res = Array(l).fill(undefined);
+    const used = Array(aa.length).fill(false);
+    let pos = 0;
+    const idx = Array(aa.length).fill(0);
+    while (pos >= 0) {
+      if (pos == l) {
+        yield res;
+        pos--;
+        used[idx[pos]-1] = false;
+        continue;
+      }
+      if (idx[pos] == aa.length) {
+        idx[pos] = 0;
+        pos--;
+        used[idx[pos]-1] = false;
+        continue;
+      }
+      if (used[idx[pos]]) {
+        idx[pos]++;
+        continue;
+      }
+      res[pos] = aa[idx[pos]];
+      used[idx[pos]] = true;
+      idx[pos++]++;
+    }
+  }
+  function * words(a, l) {
+    const aa = Array.from(a);
+    const res = Array(l).fill(undefined);
+    let pos = 0;
+    const idx = Array(aa.length).fill(0);
+    while (pos >= 0) {
+      if (pos == l) {
+        yield res;
+        pos--;
+        continue;
+      }
+      if (idx[pos] == aa.length) {
+        idx[pos--] = 0;
+        continue;
+      }
+      res[pos] = aa[idx[pos]];
+      idx[pos++]++;
+    }
+  }
+  
+  function * choose(a, l) {
+    const aa = Array.from(a);
+    const res = Array(l).fill(undefined);
+    let pos = 0;
+    const idx = Array(aa.length).fill(0);
+    while (pos >= 0) {
+      if (pos == l) {
+        yield res.slice();
+        pos--;
+        continue;
+      }
+      if (idx[pos] == aa.length) {
+        pos--;
+        continue;
+      }
+      res[pos] = aa[idx[pos]];
+      idx[pos++]++;
+      idx[pos] = idx[pos - 1];
+    }
+  }
+  
+  function best(f) {
+    let cur, curF;
+    return ({
+      add: (v) => {
+        if (cur === undefined) cur = v, curF = f(v);
+        else {
+          const newF = f(v);
+          if (newF > curF) {
+            curF = newF;
+            cur = v;
+          }
+        }
+      },
+      get: () => cur,
+    });
+  }
+  
+function plane(def = undefined, maxX = 0, maxY = 0) {
+    const rows = new Map();
+    let minX = 0, minY = 0;
+    let cursors = [];
+    const get = (x, y) => rows.has(y) ? rows.get(y).has(x) ? rows.get(y).get(x) : def : def;
+    const set = (x, y, v) => {
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+      if (!rows.has(y)) rows.set(y, new Map());
+      rows.get(y).set(x, v);
+    }
+    function * entries() {
+      for (const [y, r] of rows.entries()) for(const [x, c] of r.entries()) yield [x, y, c];
+    }
+    return ({
+      [Symbol.iterator]: entries,
+      load: (input, map = v => v) => {
+        let x = 0, y = 0;
+        const poi = {};
+        for (const c of input.split('')) {
+          if (c === '\n') x=0, y++;
+          else {
+            const v = map(c,x,y);
+            if (v !== def) poi[v] = [x,y];
+            if (v !== def) set(x++,y,v);
+          }
+        }
+        return poi;
+      },
+      get,
+      set,
+      maxX: () => maxX,
+      maxY: () => maxY,
+      print: (pad = 0) => {
+        for (let j = minY; j <= maxY; j++) {
+          const r = [];
+          for (let i = minX; i <= maxX; i++) {
+            let v = get(i, j);
+            if (v === undefined || v == null) v = ' ';
+            let t = v.toString().padStart(pad);
+            for(const c of cursors)
+              if (c.pos()[0] == i && c.pos()[1] == j)
+                t = '\033[44m' + t + '\033[0m';
+            r.push(t);
+          }
+          console.log(r.join(''));
+        }
+      },
+      cursor: () => {
+        const getRel = (rx, ry) => {
+          const rHeading = heading + 2 & 7;
+          const mx = x + rx * dirs[rHeading][0] + ry * dirs[heading][0];
+          const my = y + rx * dirs[rHeading][1] + ry * dirs[heading][1];
+          return get(mx, my)
+        };
+        let x = 0, y = 0;
+        let heading = 0;
+        const dirs = [
+          [0,-1],
+          [1,-1],
+          [1,0],
+          [1,1],
+          [0,1],
+          [-1,1],
+          [-1,0],
+          [-1,-1],
+        ];
+        const dnames = {
+          u: dirs[0],
+          d: dirs[4],
+          r: dirs[2],
+          l: dirs[6],
+          '^': dirs[0],
+          '>': dirs[2],
+          'v': dirs[4],
+          '<': dirs[6],
+          n: dirs[0],
+          s: dirs[4],
+          e: dirs[2],
+          w: dirs[6],
+        }
+        const c = ({
+          pos: () => [x, y],
+          setX: (nx) => x = nx,
+          setY: (ny) => y = ny,
+          setPos: (nx, ny) => [x, y] = [nx, ny],
+          get: () => get(x, y),
+          set: (v = true) => set(x, y, v),
+          move: (dir, a = 1) => {
+            for (const d of dir.toLowerCase()) {
+              x += a * dnames[d][0], y += a * dnames[d][1];
+            }
+          },
+          mDist: (nx = 0, ny = 0) => Math.abs(nx - x) + Math.abs(ny - y),
+          dist2: (nx = 0, ny = 0) => (nx - x)*(nx - x) + (ny - y)*(ny - y),
+          setH: (nh) => h = nh,
+          heading: () => heading,
+          fw: (a = 1) => { x += a * dirs[heading][0], y += a * dirs[heading][1] },
+          bw: (a = 1) => { x -= a * dirs[heading][0], y -= a * dirs[heading][1] },
+          turnR: (a = 2) => heading = heading + a & 7,
+          turnL: (a = 2) => heading = heading - a & 7,
+          getRel,
+          getLeft: () => getRel(-1, 0),
+          getRight: () => getRel(1, 0),
+          getFw: () => getRel(0, 1),
+        });
+        cursors.push(c)
+        return c;
+      }
+    })
+  }
+  function cls() {
+    console.log("\033[0;0H\033[3J")
+  }
+  function home() {
+    console.log("\033[0;0H")
+  }
+  function bitCount (n) {
+    n = n - ((n >> 1) & 0x55555555)
+    n = (n & 0x33333333) + ((n >> 2) & 0x33333333)
+    return ((n + (n >> 4) & 0xF0F0F0F) * 0x1010101) >> 24
+  }
+  function deepEqual(a, b) {
+    if (a === b) return true;
+    if (a === undefined || b === undefined || a === null || b === null) return false;
+    if (a instanceof Array && b instanceof Array) {
+      if (a.length !== b.length) return false;
+      return a.every((e, i) => deepEqual(e, b[i]));
+    }
+    if (typeof a === "object" && typeof b === "object") {
+      let ak = Object.keys(a).sort();
+      let bk = Object.keys(b).sort();
+      if (ak.length !== bk.length) return false;
+      if (!ak.every((e, i) => e === bk[i])) return false;
+      if (!ak.every((e) => deepEqual(a[e], b[e]))) return false;
+    }
+    return false;
+  }
+  function hash(a) {
+    if (typeof a === "number") {
+      if (a === a | 0) return a;
+      const b = new DataView(new ArrayBuffer(8));
+      b.setFloat64(Math.abs(a));
+      return b.getInt32(0) ^ b.getInt32(1);
+    }
+    if (typeof a === "string") {
+      const r = 0;
+      for (let i = 0; i < a.length; i++) {
+        r = ((r << 5) - r | 0) + a.charCodeAt(i) | 0;
+      }
+      return r;
+    }
+    if (a instanceof Array) {
+      const r = 0;
+      for (const c of a) {
+        r = ((r << 5) - r | 0) + hash(c) | 0;
+      }
+      return r;
+    }
+    if (a === null) return 0;
+    if (typeof a === "object") {
+      const r = 0;
+      for (const c in a) {
+        r = r ^ hash(a[c]);
+      }
+      return r;
+    }
+    if (a === true) return 1;
+    return 0;
+  }
+  class M {
+   m = new Map()
+   size = 0
+   set(k, v) {
+     const h = hash(k)
+     let a = this.m.get(h);
+     if (!a) this.m.set(h, a = []);
+     let e = a.findIndex(e => deepEqual(e[0], k));
+     if  (e >= 0) {
+       a[e][1] = v;
+     } else {
+       a.push([k, v]);
+       this.size++;
+     }
+   }
+   get(k) {
+     const a = this.m.get(hash(k));
+     return a ? a.find(e => deepEqual(e[0], k))[1] : undefined;
+   }
+   has(k) {
+    const a = this.m.get(hash(k));
+    return a ? a.contains(e => deepEqual(e[0], k)) : false;
+   }
+ }
+function gcd(...a) {
+  return a.reduce((a, b) => {
+    while (b) [a, b] = [b, a % b]
+    return a;
+  });
+}
+function lcm(...a) {
+  const z = a.map((_, i) => a.reduce((a, b, j) => i !== j ? a * b : a, 1));
+  return a.reduce((a, b) => a * b) / gcd(...z);
+}
+function *primes(max) {
+  let p = [];
+  for (let i = 2; !max || i < max; i++) if (!p.some(e => i % e === 0)) {
+    yield i;
+    p.push(i);
+  }
+}
+
+function bfs(init, visit, key) {
+  if (!key) {
+    key = init instanceof Array ? v => v.join(',') : v => v
+  }
+  const q = [init];
+  const distanceMap = new Map([[key(init), 0]]);
+  let qp = 0, distance;
+  while (qp < q.length) {
+    const e = q[qp];
+    q[qp++] = undefined;
+    distance = distanceMap.get(key(e));
+    const a = visit(e, distance);
+    if (a === undefined) break;
+    for (const n of a) {
+      if (distanceMap.has(key(n))) continue;
+      distanceMap.set(key(n), distance + 1);
+      q.push(n);
+    }
+  }
+  return ({distance, distanceMap});
+}
+function connect(a, b, g1, g2 = g1) {
+  if (!g1[a]) g1[a] = [];
+  g1[a].push(b);
+  if (g2 === false) return;
+  if (!g2[b]) g2[b] = [];
+  g2[b].push(a);
+}
+  
+function once() {
+  let done = false;
+  return (f) => {
+    if (done) return false;
+    f && f();
+    return done = true;
+  };
+}
+
+function clamp(a, b) {
+  return v => v < a ? a : v > b ? b : v;
+}
+function rotL(a, n) {
+  n %= a.length;
+  if (n < 0) n = a.length + n;
+  return a.slice(n).concat(a.slice(0,n))
+}
+function rotR(a, n) {
+  return rotL(a, -n);
+}
+
+
+function nextPow2(n) {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+module.exports = {
+    seq,
+    bitSeq: n => seq(n).map(i => 1 << i),
+    sort,
+    freq, freqa,
+    min: Math.min,
+    max: Math.max,
+    abs: Math.abs,
+    parse,
+    caseParse,
+    perm, words, choose,
+    best,
+    plane,
+    bitCount,
+    deepEqual,
+    hash,
+    cls,
+    home,
+    gcd,
+    lcm,
+    primes,
+    bfs,
+    connect,
+    once,
+    rotL,
+    rotR,
+    nextPow2,
+    clamp,
+}
