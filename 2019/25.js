@@ -7,81 +7,38 @@ const intcode = require('./intcode');
 
 const input = A.parse(content, /(-?\d+)/g);
 function go (prog) {
-  let line = '';
+  let out = [];
   intcode(input,prog.split('').map(e => e.charCodeAt(0)), v => {
-    if (v > 128) l(v)
-    else if (v === 10) {
-      l(line); line = '';
-    } else {
-      line += String.fromCharCode(v);
-    }
+    out.push(String.fromCharCode(v));
+    if (out[out.length-1]==='=' && out[out.length-2]==='=' &&
+        out[out.length-3]==='\n') out = ['=','='];
   })
+  return out.join('');
 }
-let prog = `south
-take mutex
-east
-take mug
-east
-take polygon
-east
-east
-east
-take pointer
-south
-west
-east
-north
-west
-north
-south
-west
-west
-north
-take loom
-north
-take hypercube
-south
-south
-west
-west
-south
-take manifold
-west
-west
-take klein bottle
-east
-south
-north
-east
-north
-north
-west
-east
-south
-east
-east
-east
-east
-east
-south
-drop loom
-drop pointer
-drop manifold
-drop polygon
-west
-west
-`;
 
-let inv = ['drop klein bottle',
-'drop loom',
-'drop mutex',
-'drop pointer',
-'drop hypercube',
-'drop mug',
-'drop manifold'];
-// for (i = 74; i < 75; i++) {
-//   let p = inv.filter((e, j) => i & (1 << j))
-//   l(p);
-//   go(prog + p.join("\n") + "\nwest\nwest\n")
-// }
-go(prog);
+const visited = {};
+A.bfs("", (path, dist) => {
+  let loc = go(path + "inv\n");
+  let matchRoom = loc.match(/== (.*?) ==/);
+  matchRoom = matchRoom && matchRoom[1];
+  let matchDirs = loc.match(/lead:\n((- .*\n)+)/);
+  matchDirs = matchDirs ? Array.from(matchDirs[1].matchAll(/[a-z]+/g)).map(m => m[0]) : [];
+  let matchItems = loc.match(/Items here:\n((- .*\n)+)/);
+  matchItems = matchItems ? Array.from(matchItems[1].matchAll(/- (.+)/g)).map(m => m[1]) : [];
+  let matchInv = loc.match(/inventory:\n((- .*\n)+)/);
+  matchInv = matchInv ? Array.from(matchInv[1].matchAll(/- (.+)/g)).map(m => m[1]) : [];
+  matchInv.sort();
+  let matchPass = loc.match(/\d{4,}/);
+  if (matchPass) {
+    l(matchPass[0]);
+    l(path);
+    return;
+  }
+  const key = [matchRoom, ...matchInv].join('|');
+  if (visited[key]) return [];
+  visited[key] = true;
+  for(const i of matchItems) {
+    if (i !== 'infinite loop') matchDirs.push("take " + i); 
+  }
+  return matchDirs.map(d => path + d + '\n');
+})
