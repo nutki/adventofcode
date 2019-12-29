@@ -27,14 +27,11 @@ while(true) {
     break;
   }
 }
-function go2 (path) {
-  input[0] = 2;
-  intcode(input, path.split('').map(c => c.charCodeAt(0)), v => v > 127 && l(v));
-}
 res2 = res2.join('').replace(/F+/g, m => `,${m.length},`);
 let m = res2.match(/^(.{1,20})(?:\1)*(.{1,20})(?:\1|\2)*(.{1,20})(?:\1|\2|\3)*$/);
-res2 = res2.replace(new RegExp(m[1],'g'),'A,');
-res2 = res2.replace(new RegExp(m[2],'g'),'B,');
-res2 = res2.replace(new RegExp(m[3],'g'),'C,');
+res2 = res2.replace(new RegExp(m[1],'g'),'A,')
+  .replace(new RegExp(m[2],'g'),'B,')
+  .replace(new RegExp(m[3],'g'),'C,');
 let ii = [res2,m[1],m[2],m[3],"n,"].map(a => a.replace(/,$/, '\n')).join('');
-go2(ii)
+input[0] = 2;
+intcode(input, ii.split('').map(c => c.charCodeAt(0)), v => v > 127 && l(v));

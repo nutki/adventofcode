@@ -2,43 +2,39 @@
 const A = require('../advent');
 const l = console.log
 const content = require('fs').readFileSync('25.input.txt','utf8');
-
 const intcode = require('./intcode');
 
 const input = A.parse(content, /(-?\d+)/g);
-function go (prog) {
-  let out = [];
-  intcode(input,prog.split('').map(e => e.charCodeAt(0)), v => {
-    out.push(String.fromCharCode(v));
-    if (out[out.length-1]==='=' && out[out.length-2]==='=' &&
-        out[out.length-3]==='\n') out = ['=','='];
-  })
-  return out.join('');
+let initRoom = '';
+const init = intcode(input, [], v => initRoom += String.fromCharCode(v));
+function go(prev, cmd) {
+  const cmdCodes = Array.from(cmd + '\n').map(c => c.charCodeAt(0));
+  let currnetRoom = '';
+  const current = prev.clone(cmdCodes, v => currnetRoom  += String.fromCharCode(v));
+  return [current, currnetRoom];
 }
-
-const visited = {};
-A.bfs("", (path, dist) => {
-  let loc = go(path + "inv\n");
+function roomName(loc) {
   let matchRoom = loc.match(/== (.*?) ==/);
-  matchRoom = matchRoom && matchRoom[1];
+  return matchRoom && matchRoom[1];
+}
+function roomDirs(loc) {
   let matchDirs = loc.match(/lead:\n((- .*\n)+)/);
-  matchDirs = matchDirs ? Array.from(matchDirs[1].matchAll(/[a-z]+/g)).map(m => m[0]) : [];
+  return matchDirs ? Array.from(matchDirs[1].matchAll(/[a-z]+/g)).map(m => m[0]) : [];
+}
+function roomItems(loc) {
   let matchItems = loc.match(/Items here:\n((- .*\n)+)/);
-  matchItems = matchItems ? Array.from(matchItems[1].matchAll(/- (.+)/g)).map(m => m[1]) : [];
-  let matchInv = loc.match(/inventory:\n((- .*\n)+)/);
-  matchInv = matchInv ? Array.from(matchInv[1].matchAll(/- (.+)/g)).map(m => m[1]) : [];
-  matchInv.sort();
-  let matchPass = loc.match(/\d{4,}/);
+  return matchItems ? Array.from(matchItems[1].matchAll(/- (.+)/g)).map(m => m[1]) : [];
+}
+A.bfs([init, initRoom], ([prev, room, ...inv], dist) => {
+  const name = roomName(room);
+  if (name === null) return [];
+  const dirs = roomDirs(room);
+  const items = roomItems(room).filter(i => i !== 'infinite loop' && !inv.includes(i));
+  let matchPass = room.match(/\d{4,}/);
   if (matchPass) {
-    l(matchPass[0]);
-    l(path);
+    l(matchPass[0], dist, ...inv);
     return;
   }
-  const key = [matchRoom, ...matchInv].join('|');
-  if (visited[key]) return [];
-  visited[key] = true;
-  for(const i of matchItems) {
-    if (i !== 'infinite loop') matchDirs.push("take " + i); 
-  }
-  return matchDirs.map(d => path + d + '\n');
-})
+  return dirs.map(d => [...go(prev, d), ...inv]).concat(
+    items.map(i => [go(prev, `take ${i}`)[0], room, ...[...inv, i].sort()]));
+}, ([prev, room, ...inv]) => [roomName(room), ...inv].join(','));

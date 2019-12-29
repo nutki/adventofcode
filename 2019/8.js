@@ -1,18 +1,13 @@
 #!/usr/bin/env node
-const fs = require('fs');
 const A = require('../advent');
 const l = console.log
-const { max, min, abs, seq, freq } = A;
-const content = fs.readFileSync('8.input.txt','utf8');
-v =[]
-me = Array(150).fill(2);
+const content = require('fs').readFileSync('8.input.txt','utf8');
+let b = A.best(v => -v[0]);
+let me = Array(150).fill('2');
 content.replace(/.{150}/g, (m) => {
-    z = freq(m);
-    for ([idx, i] of Array.from(m).entries()) {
-        if (me[idx] == 2) me[idx] = i;
-    }
-    v.push({z:z[0], v:z[1] * z[2]});
+    let z = A.freq(m);
+    Array.from(m).forEach((i, idx) => me[idx] === '2' && (me[idx] = i));
+    b.add([z[0], z[1] * z[2]]);
 })
-l(v);
-
-l(me.join('').replace(/.{25}/g, m => m + '\n').replace(/0/g,' ' ));
+l(b.get()[1]);
+l(me.map(a => ' #'[a]).join('').replace(/.{25}/g, m => `${m}\n`));

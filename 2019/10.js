@@ -1,62 +1,36 @@
 #!/usr/bin/env node
-const fs = require('fs');
 const A = require('../advent');
 const l = console.log
-const { max, min, abs, seq, freq, freqa, sort, parse } = A;
-const content = fs.readFileSync('10.input.txt','utf8');
+const content = require('fs').readFileSync('10.input.txt','utf8');
 
-const input = parse(content, /(.*)\n/g);
-let y = 0;
-const ast = [];
-for (const line of input) {
-    let x = 0;
-    for (const c of line.split('')) {
-        if (c==='#') {
-            ast.push({x,y});
-        }
-        x++;
-    }
-    y++;
+const p = A.plane('.');
+p.load(content);
+let ast = Array.from(p).map(([x, y]) => ({x, y}));
+function byAngle(a) {
+  const v = new Map();
+  for (const b of ast) {
+    if (a === b) continue;
+    const rx = b.x - a.x, ry = a.y - b.y;
+    let rat = ry === 0 ? 1000 : A.abs(rx)/A.abs(ry);
+    if (rx >= 0 && ry < 0) rat = 10000 - rat;
+    else if (rx < 0 && ry < 0) rat = 10000 + rat;
+    else if (rx < 0 && ry >= 0) rat = 20000 - rat;
+    if(!v.has(rat)) v.set(rat, []);
+    v.get(rat).push(b);
+  }
+  return v;
 }
-l(ast);
-const res = [];
-let i = 0;
-for (const a of [ast[306]]) {
-    const v = new Map();
-    const d = new Map();
-    for (const b of ast) {
-        if (a === b) continue;
-        const rx = b.x - a.x, ry = a.y - b.y;
-        let rat = ry === 0 ? 1000 : abs(rx)/abs(ry);
-        if (rx >=0 && ry < 0) rat = 10000 - rat;
-        else if (rx < 0 && ry < 0) rat = 10000 + rat;
-        else if (rx < 0 && ry >= 0) rat = 20000 - rat;
-//        l(rx,ry,rat)
-//        while (v.has(rat)) rat += 40000;
-        const dist = rx*rx+ry*ry;
-        if (!d.has(rat) || d.get(rat) > dist) {
-            d.set(rat, dist);
-            v.set(rat, b);
-        }
-    }
-    const order = sort(Array.from(v.keys()));
-//    l(order);
-    for (let q of [10,20,50,199,200]) {
-        const rr = v.get(order[q-1]);
-        l(q,order[q], rr, rr.x-11, rr.y-13);
-    }
-    res.push(v.size);
-    if (v.size === 286) l("HERE",a,i);
-    i++;
-//    l(v.size, v)
+function nth(a, pos) {
+  const v = byAngle(a);
+  const m = (pos - 1) % v.size;
+  const d = (pos - 1) / v.size | 0;
+  const rad = A.sort(Array.from(v), v => v[0])[m];
+  const rad2 = A.sort(rad[1], ({x,y}) => (a.x-x)*(a.x-x) + (a.y-y)*(a.y-y))[d];
+  return rad2;
 }
-l(ast.length, sort(res, v => -v)[0])
-/*
-
-.7..7
-.....
-67775
-....7
-...87
-
-*/
+const best = A.best(v => v[1]);
+for (const a of ast) best.add([a, byAngle(a).size]);
+const [a, cnt] = best.get();
+l(cnt);
+const b = nth(a, 200)
+l(b.x * 100 + b.y);
