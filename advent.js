@@ -133,7 +133,8 @@ function plane(def = undefined, maxX = 0, maxY = 0) {
           else {
             const v = map(c,x,y);
             if (v !== def) poi[v] = [x,y];
-            if (v !== def) set(x++,y,v);
+            if (v !== def) set(x,y,v);
+            x++;
           }
         }
         return poi;
@@ -371,6 +372,21 @@ function rotR(a, n) {
   return rotL(a, -n);
 }
 
+function binsearch(a, what, s = 0, e = a.length) {
+  if (a instanceof Array) a = x => a[x];
+  let mid = s, midv;
+  while (e - s > 1) {
+    mid = Math.floor((s + e) / 2);
+    midv = a(mid);
+    if (midv === what) break;
+    else if (midv > what) {
+      e = mid;
+    } else {
+      s = mid + 1;
+    }
+  }
+  return [mid, midv];
+}
 
 function nextPow2(n) {
   let p = 1;
@@ -405,4 +421,5 @@ module.exports = {
     rotR,
     nextPow2,
     clamp,
+    binsearch,
 }
