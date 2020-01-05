@@ -2,7 +2,7 @@
 const A = require('../advent');
 const l = console.log
 const content = require('fs').readFileSync('19.input.txt','utf8');
-const intcode = require('./intcode');
+const intcode = require('./intcode_em');
 
 const input = A.parse(content, /(-?\d+)/g);
 function go (x, y) {
@@ -13,7 +13,7 @@ for (const i of A.seq(50)) for (const j of A.seq(50)) cnt += go(i,j);
 l(cnt)
 const p = A.plane(0);
 let sums = Array(1000).fill(0);
-for (let j = 800;; j++) {
+for (let j = 900;; j++) {
   let prev = 0;
   let ranges = [];
   for (let i of A.seq(1000)) {

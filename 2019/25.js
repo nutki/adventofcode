@@ -2,7 +2,7 @@
 const A = require('../advent');
 const l = console.log
 const content = require('fs').readFileSync('25.input.txt','utf8');
-const intcode = require('./intcode');
+const intcode = require('./intcode_em');
 
 const input = A.parse(content, /(-?\d+)/g);
 let initRoom = '';
