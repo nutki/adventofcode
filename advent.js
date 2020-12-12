@@ -3,11 +3,12 @@ const sort = (a, f = v => v) => Array.from(a).sort((a, b) => {
     const av = f(a), bv = f(b);
     return av > bv ? 1 : av < bv ? -1 : 0;
 })
-const freqa = v => sort(Array.from(Object.entries(freq(v))), c => -c[1])
+const freqmap = v => { const r = new Map(); for(i of v) r.set(i, (r.get(i) || 0) + 1); return r }
+const freqa = v => sort(freqmap(v).entries(), c => -c[1])
 const parse = (it, p) => {
     const res = [];
     for (const [_, ...m] of it.matchAll(p)) {
-        res.push(m.map(e => e.match(/^-?[1-9]\d{0,15}$|^0$/) ? parseInt(e) : e));
+        res.push(m.map(e => e && e.match(/^-?[1-9]\d{0,15}$|^0$/) ? parseInt(e) : e));
     }
     return res.map(m => m.length === 1 ? m[0] : m);
 }
@@ -19,7 +20,7 @@ const caseParse = (it, ...c) => {
     }
     return undefined;
 }
-const seq = n => Array.from(new Array(n).keys());
+const seq = (a, b) => Array.from(new Array(b === undefined ? a : b - a).keys()).map(v => b === undefined ? v : v + a);
 function * perm(a, ll) {
     const aa = Array.from(a);
     const l = ll === undefined ? aa.length : Math.min(ll, aa.length);
@@ -90,7 +91,7 @@ function * perm(a, ll) {
     }
   }
   
-  function best(f) {
+  function best(f = a => a) {
     let cur, curF;
     return ({
       add: (v) => {
@@ -158,15 +159,13 @@ function plane(def = undefined, maxX = 0, maxY = 0) {
           console.log(r.join(''));
         }
       },
-      cursor: () => {
+      cursor: (x = 0, y = 0, heading = 0) => {
         const getRel = (rx, ry) => {
           const rHeading = heading + 2 & 7;
           const mx = x + rx * dirs[rHeading][0] + ry * dirs[heading][0];
           const my = y + rx * dirs[rHeading][1] + ry * dirs[heading][1];
           return get(mx, my)
         };
-        let x = 0, y = 0;
-        let heading = 0;
         const dirs = [
           [0,-1],
           [1,-1],
@@ -205,7 +204,7 @@ function plane(def = undefined, maxX = 0, maxY = 0) {
           },
           mDist: (nx = 0, ny = 0) => Math.abs(nx - x) + Math.abs(ny - y),
           dist2: (nx = 0, ny = 0) => (nx - x)*(nx - x) + (ny - y)*(ny - y),
-          setH: (nh) => h = nh,
+          setH: (nh) => heading = nh,
           heading: () => heading,
           fw: (a = 1) => { x += a * dirs[heading][0], y += a * dirs[heading][1] },
           bw: (a = 1) => { x -= a * dirs[heading][0], y -= a * dirs[heading][1] },
@@ -341,7 +340,7 @@ function bfs(init, visit, key) {
       q.push(n);
     }
   }
-  return ({distance, distanceMap});
+  return ({distance, distanceMap, size: qp});
 }
 function connect(a, b, g1, g2 = g1) {
   if (!g1[a]) g1[a] = [];
@@ -393,6 +392,67 @@ function nextPow2(n) {
   while (p < n) p *= 2;
   return p;
 }
+function range(n) {
+  return [...Array(n).keys()];
+}
+function sum(a, f = x => x) {
+  let s = 0, i = 0;
+  for (const v of a) s += f(v, i++);
+  return s;
+}
+function prod(a, f = x => x) {
+  let s = 1, i = 0;
+  for (const v of a) s *= f(v, i++);
+  return s;
+}
+function neighbor4(x = 0, y = 0) {
+  return [[x,y+1],[x,y-1],[x+1,y],[x-1,y]];
+}
+function neighbor8(x = 0, y = 0) {
+  return [[x,y+1],[x,y-1],[x+1,y],[x-1,y],[x+1,y+1],[x-1,y-1],[x-1,y+1],[x+1,y-1]];
+}
+function graph(dir = true) {
+  const v = {};
+  let ne = 0;
+  const connect = (v1, v3, e) => {
+    ne++;
+    v[v1] = v[v1] || {fe:[], re:[], fee:[], ree:[]};
+    v[v3] = v[v3] || {fe:[], re:[], fee:[], ree:[]};
+    v[v1].fe.push(v3);
+    (dir ? v[v3].re : v[v3].fe).push(v1);
+    if (e !== undefined) {
+      v[v1].fee.push([v3, e]);
+      (dir ? v[v3].ree : v[v3].fee).push([v1, e]);
+    }
+  }
+  const vertices = () => Object.keys(v);
+  const roots = () => vertices().filter(k => v[k].re.length === 0);
+  const leaves = () => vertices().filter(k => v[k].fe.length === 0);
+  return {
+    vertices,
+    bfs: (init, visit) => bfs(init, (e, d) => (visit && visit(e, d) === true ? undefined : v[e].fe)),
+    bfsRev: (init, visit) => bfs(init, (e, d) => (visit && visit(e, d) === true ? undefined : v[e].re)),
+    dfsReduce: (init, visit) => {
+      const t = (n) => visit(v[n].fee.map(([n2, e]) => [t(n2), e, n]), n);
+      return t(init);
+    },
+    dfsReduceRev: (init, visit) => {
+      const t = (n) => visit(v[n].ree.map(([n2, e]) => [t(n2), e, n]), n);
+      return t(init);
+    },
+    roots, leaves,
+    connect,
+    desc: () => {
+      const atos = (a) => !a.length ? "" : `: ${a[0]}${a.length > 0 ? "..." : ""}`
+      console.log(`${vertices().length} nodes ${ne} edges`)
+      if (dir) {
+        const r = roots(), l = leaves();
+        console.log(`${r.length} roots${atos(r)}`);
+        console.log(`${l.length} leaves${atos(l)}`);
+      }
+    }
+  };
+}
 module.exports = {
     seq,
     bitSeq: n => seq(n).map(i => 1 << i),
@@ -422,4 +482,10 @@ module.exports = {
     nextPow2,
     clamp,
     binsearch,
+    range,
+    sum,
+    prod,
+    neighbor4,
+    neighbor8,
+    graph,
 }
