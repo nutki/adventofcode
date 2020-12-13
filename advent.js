@@ -309,6 +309,18 @@ function gcd(...a) {
     return a;
   });
 }
+function extended_gcd(a, b) {
+  let [old_r, r] = [a, b];
+  let [old_s, s] = [1, 0];
+  let [old_t, t] = [0, 1];
+  while(r!==0) {
+    const q = Math.floor(old_r / r);
+    [old_r, r] = [r, old_r - q * r];
+    [old_s, s] = [s, old_s - q * s];
+    [old_t, t] = [t, old_t - q * t];
+  }
+  return [old_s, old_t, old_r, t, s];
+}
 function lcm(...a) {
   const z = a.map((_, i) => a.reduce((a, b, j) => i !== j ? a * b : a, 1));
   return a.reduce((a, b) => a * b) / gcd(...z);
@@ -488,4 +500,5 @@ module.exports = {
     neighbor4,
     neighbor8,
     graph,
+    extended_gcd,
 }
