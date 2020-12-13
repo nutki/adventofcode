@@ -12,9 +12,11 @@ function onExit() {
   run = undefined;
 }
 notify.stdout.on('data', (buffer) => {
-  const x = buffer.toString().match(/(\S+) \S+ ((\d+)?\.js)\n/);
+  const x = buffer.toString().match(/(\S+) \S+ ((\d+)?\.(js|pl))\n/);
   if (!x) return;
   const name = x[1]+x[2];
+  const input = `${x[3]}.input.txt`
+  const bin = { js: 'node', pl: 'perl'}[x[4]];
   url = year ? ` https://adventofcode.com/${year}/day/${x[3]}` : '';
   if (run !== undefined) {
     run.off('exit', onExit);
@@ -22,7 +24,7 @@ notify.stdout.on('data', (buffer) => {
   }
   console.log('\033[0;0H\033[3J\033[J\033[37;1mRunning ' + name + url + '\033[0m')
   timeStart = Date.now();
-  run = child.spawn('node', [name], { stdio: 'inherit' });
+  run = child.spawn(bin, [name, input], { stdio: 'inherit' });
   listen = run.on('exit', onExit);
 });
 notify.on('error', (...ev) => {
