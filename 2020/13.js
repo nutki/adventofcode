@@ -4,21 +4,17 @@ const B = BigInt;
 const l = console.log
 const content = require('fs').readFileSync('13.input.txt','utf8');
 const [n, ...input] = A.parse(content, /(\w+)/g);
-function solve(input) {
+function solve() {
   let pairs = input.map((c, i) => [(c - i%c)%c, c]).filter(v => v[1] !== 'x');
-  for (let i = n; ; i++) {
-    const b = pairs.find(v => i%v[1] === 0);
-    if (b) {
-      l(b[1]*(i-n));
-      break;
-    }
-  }
-  return pairs.reduce((p1, p2) => {
-    let cf = A.extended_gcd(p1[1], p2[1]);
-    let m =  p1[1]*p2[1];
-    let M = B(m);
-    let r = Number(((B(cf[0]*p1[1])*B(p2[0])+B(cf[1]*p2[1])*B(p1[0]))%M+M)%M);
-    return [r,m];
-  })[0];
+  let b = A.best(([_, c])=>n%c-c);
+  pairs.forEach(b.add);
+  let c = b.get()[1];
+  return [c*(c-n%c), pairs.reduce(([n1,m1], [n2,m2]) => {
+    let [c1, c2] = A.extended_gcd(m1, m2);
+    let m =  B(m1*m2);
+    let r = B(c1*m1)*B(n2) + B(c2*m2)*B(n1);
+    r %= m; r += m; r %= m;
+    return [r,m].map(Number);
+  })[0]];
 }
-l(solve(input));
+l(solve());
