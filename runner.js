@@ -31,10 +31,20 @@ notify.on('error', (...ev) => {
   console.log(ev)
 });
 if (create) {
-  console.log(create)
-  const cookies = fs.readFileSync('cookies','utf8')
-  child.execFile('curl', ['-b', cookies, '-o',create+'.input.txt','https://adventofcode.com/'+year+'/day/'+create+'/input'], () => {
-    child.execFile('../templates.pl', [create]);
+  console.log("Creating template for day",create);
+  const cookies = fs.readFileSync('cookies','utf8');
+  const url = 'https://adventofcode.com/'+year+'/day/'+create;
+  child.execFile('curl', ['-b', cookies, '-o',create+'.input.txt',url+'/input'], () => {
+    child.execFile('../templates.pl', [create], () => {
+      console.log("Done create");
+    });
   });
-  console.log('Done create')
+  child.execFile('curl', ['-b', cookies, '-o-',url], (_,text) => {
+    const s = text.matchAll(/<pre><code>([^<]+)<.code><.pre>/);
+    let idx = 0;
+    for (const i of s) {
+      fs.writeFileSync(`${create}.input.e${++idx}.txt`, i[1]);
+    }
+    console.log(`Done ${idx} examples`);
+  });
 }
