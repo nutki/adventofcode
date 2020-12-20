@@ -5,8 +5,7 @@ const content = require('fs').readFileSync('19.input.txt','utf8');
 
 function solve() {
   let cnt = '', cnt2 = 0;
-  const p = A.plane(' ');
-  p.load(content);
+  const p = A.plane(' ', content);
   for (const [x, y, a] of p) if (a === '|') {
     const c = p.cursor(x, y, 4);
     while(c.get() !== ' ') {

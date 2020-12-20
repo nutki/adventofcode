@@ -3,28 +3,19 @@ const A = require("../advent");
 const l = console.log;
 const content = require("fs").readFileSync("20.input.txt", "utf8");
 
-const mons = A.plane(" ");
-mons.load(
+const mons = A.plane(
+  " ",
   `                  # 
 #    ##    ##    ###
  #  #  #  #  #  #   
  `
 );
-const paras = content.trim().split("\n\n");
-const input = paras
+const input = content
+  .trim()
+  .split("\n\n")
   .map((p) => A.parse(p, /Tile (.+):\n(.*)/gs))
-  .map(([[i, c]]) => {
-    const p = A.plane();
-    p.load(c);
-    return [i, p];
-  });
-function rev(n) {
-  let res = 0;
-  for (let i = 0; i < 10; i++) {
-    if (n & (1 << i)) res += 1 << (9 - i);
-  }
-  return res;
-}
+  .map(([[i, c]]) => [i, A.plane(".", c)]);
+const rev = (n) => A.seq(10).sum((i) => (n & (1 << i) ? 1 << (9 - i) : 0));
 const flipX = ([l, t, r, b]) => [r, rev(t), l, rev(b)];
 const rotR = ([l, t, r, b]) => [b, rev(l), t, rev(r)];
 function monsterAt(p, x, y) {
@@ -57,9 +48,8 @@ function solve() {
     eli.push(x);
   }
   const used = [];
-  let pos = 0;
   const map = [];
-  function move() {
+  function move(pos) {
     if (pos === m) {
       const cor = [map[0][0], map[n - 1][0], map[m - 1][0], map[m - n][0]];
       let cnt = 0;
@@ -82,7 +72,7 @@ function solve() {
       for (let y = 0; y < n * 8 - mons.maxY() - 1; y++)
         for (let x = 0; x < n * 8 - mons.maxX() - 1; x++)
           if (monsterAt(p, x, y)) (found = true), (cnt -= 15);
-      if (found) l(A.prod(cor), cnt);
+      if (found) l(cor.prod(), cnt);
       return;
     }
     const x = pos % n;
@@ -102,12 +92,10 @@ function solve() {
     for (const [e, o] of matches) {
       used[e] = true;
       map[pos] = [e, o];
-      pos++;
-      move();
-      pos--;
+      move(pos + 1);
       used[e] = false;
     }
   }
-  move();
+  move(0);
 }
 solve();

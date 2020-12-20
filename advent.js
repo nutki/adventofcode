@@ -108,40 +108,51 @@ function * perm(a, ll) {
     });
   }
   
-function plane(def = undefined, maxX = 0, maxY = 0) {
+function plane(def = undefined, content) {
     const rows = new Map();
-    let minX = 0, minY = 0;
+    let minX = 0, minY = 0, maxX = 0, maxY = 0;
     let cursors = [];
     const get = (x, y) => rows.has(y) ? rows.get(y).has(x) ? rows.get(y).get(x) : def : def;
+    const del = (x, y) => {
+      if (rows.has(y)) rows.get(y).delete(x);
+    }
     const set = (x, y, v) => {
       minX = Math.min(minX, x);
       minY = Math.min(minY, y);
       maxX = Math.max(maxX, x);
       maxY = Math.max(maxY, y);
+      if (v === def) {
+        del(x, y);
+        return;
+      }
       if (!rows.has(y)) rows.set(y, new Map());
       rows.get(y).set(x, v);
     }
     function * entries() {
       for (const [y, r] of rows.entries()) for(const [x, c] of r.entries()) yield [x, y, c];
     }
+    function load(input, map = v => v) {
+      let x = 0, y = 0;
+      const poi = {};
+      if (input instanceof Array) input = input.join('\n');
+      for (const c of input.split('')) {
+        if (c === '\n') x=0, y++;
+        else {
+          const v = map(c,x,y);
+          if (v !== def) poi[v] = [x,y];
+          if (v !== def) set(x,y,v);
+          x++;
+        }
+      }
+      return poi;
+    }
+    if (content) load(content);
     return ({
       [Symbol.iterator]: entries,
-      load: (input, map = v => v) => {
-        let x = 0, y = 0;
-        const poi = {};
-        for (const c of input.split('')) {
-          if (c === '\n') x=0, y++;
-          else {
-            const v = map(c,x,y);
-            if (v !== def) poi[v] = [x,y];
-            if (v !== def) set(x,y,v);
-            x++;
-          }
-        }
-        return poi;
-      },
+      load,
       get,
       set,
+      del,
       maxX: () => maxX,
       maxY: () => maxY,
       print: (pad = 0) => {

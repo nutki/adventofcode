@@ -3,8 +3,7 @@ const A = require("../advent");
 const l = console.log;
 const content = require("fs").readFileSync("17.input.txt", "utf8");
 
-const input = A.plane(".");
-input.load(content);
+const input = A.plane(".", content);
 function solve(part2) {
   let cnt = 0;
   let cube = new Set();

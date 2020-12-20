@@ -28,8 +28,7 @@ function hash(input) {
 
 function solve(input, part2) {
   const [key] = input;
-  const p = A.plane('0');
-  p.load(A.range(128).map(i => hash(`${key}-${i}`)).join('\n'));
+  const p = A.plane('0', A.range(128).map(i => hash(`${key}-${i}`)));
   let sum = 0;
   for (const [x, y, v] of p) {
     if (v === '1') sum++;

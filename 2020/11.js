@@ -4,8 +4,7 @@ const l = console.log
 const content = require('fs').readFileSync('11.input.txt','utf8');
 
 function solve(part2) {
-  let p = A.plane(), p2 = A.plane();
-  p.load(content);
+  let p = A.plane(' ', content), p2 = A.plane(' ');
   let prev = 0;
   for (;;) {
     let cnt = 0;
