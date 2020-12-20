@@ -15,85 +15,67 @@ const input = content
   .split("\n\n")
   .map((p) => A.parse(p, /Tile (.+):\n(.*)/gs))
   .map(([[i, c]]) => [i, A.plane(".", c)]);
-const rev = (n) => A.seq(10).sum((i) => (n & (1 << i) ? 1 << (9 - i) : 0));
-const flipX = ([l, t, r, b]) => [r, rev(t), l, rev(b)];
-const rotR = ([l, t, r, b]) => [b, rev(l), t, rev(r)];
 function monsterAt(p, x, y) {
   for (const [xm, ym] of mons) {
     if (p.get(x + xm, y + ym) !== "#") return false;
   }
   return true;
 }
+function matchTop(p1, p2) {
+  if (!p1._bottom) p1._bottom = p1.getLineStr(0, p1.maxY());
+  if (!p2._top) p2._top = p2.getLineStr(0, 0);
+  return p1._bottom === p2._top;
+}
+function matchLeft(p1, p2) {
+  if (!p1._right) p1._right = p1.getLineStr(p1.maxX(), 0, 0, 1);
+  if (!p2._left) p2._left = p2.getLineStr(0, 0, 0, 1);
+  return p1._right === p2._left;
+}
 function solve() {
-  const n = Math.sqrt(input.length);
   const m = input.length;
-  let el = [],
-    eli = [],
-    elp = [];
-  for (const [x, p] of input) {
-    let b = [0, 0, 0, 0];
-    for (let i = 0; i < 10; i++) {
-      b[0] += (p.get(0, i) === "#") << i;
-      b[1] += (p.get(i, 0) === "#") << i;
-      b[2] += (p.get(9, i) === "#") << i;
-      b[3] += (p.get(i, 9) === "#") << i;
-    }
-    const all = [];
-    for (let i of A.seq(4)) {
-      all.push(b, flipX(b));
-      b = rotR(b);
-    }
-    el[x] = all;
-    elp[x] = p;
-    eli.push(x);
-  }
+  const n = Math.sqrt(m);
+  let els = input
+    .map(([x, p]) =>
+      A.seq(8).map((i) => {
+        let pr = p.rotate(i >> 1);
+        if (i & 1) pr = pr.flipX();
+        pr._id = x;
+        return pr;
+      })
+    )
+    .flatten();
   const used = [];
   const map = [];
   function move(pos) {
     if (pos === m) {
-      const cor = [map[0][0], map[n - 1][0], map[m - 1][0], map[m - n][0]];
+      const cor = [map[0], map[n - 1], map[m - 1], map[m - n]].prod(
+        (p) => p._id
+      );
       let cnt = 0;
-      let found;
+      let mcnt = 0;
       const p = A.plane();
       for (let y = 0; y < n * 8; y++) {
         for (let x = 0; x < n * 8; x++) {
-          let pos = (y >> 3) * n + (x >> 3);
-          let pi = elp[map[pos][0]];
-          let oi = map[pos][1];
-          let xi = (x & 7) + 1,
-            yi = (y & 7) + 1;
-          if (oi & 1) xi = 9 - xi;
-          for (let k = 0; k < oi >> 1; k++) [xi, yi] = [yi, 9 - xi];
-          const z = pi.get(xi, yi);
+          const z = map[(y >> 3) * n + (x >> 3)].get((x & 7) + 1, (y & 7) + 1);
           if (z === "#") cnt++;
           p.set(x, y, z);
         }
       }
       for (let y = 0; y < n * 8 - mons.maxY() - 1; y++)
         for (let x = 0; x < n * 8 - mons.maxX() - 1; x++)
-          if (monsterAt(p, x, y)) (found = true), (cnt -= 15);
-      if (found) l(cor.prod(), cnt);
+          if (monsterAt(p, x, y)) mcnt++;
+      if (mcnt) l(cor, cnt - mcnt * 15);
       return;
     }
-    const x = pos % n;
-    const y = Math.floor(pos / n);
-    const top = y > 0 ? el[map[pos - n][0]][map[pos - n][1]][3] : 0;
-    const left = x > 0 ? el[map[pos - 1][0]][map[pos - 1][1]][2] : 0;
-    const matches = [];
-    for (const i of eli) {
-      const e = el[i];
-      if (used[i]) continue;
-      for (let o = 0; o < 8; o++) {
-        if (x > 0 && e[o][0] !== left) continue;
-        if (y > 0 && e[o][1] !== top) continue;
-        matches.push([i, o]);
-      }
-    }
-    for (const [e, o] of matches) {
-      used[e] = true;
-      map[pos] = [e, o];
+    const [y, x] = A.div(pos, n);
+    for (const el of els) {
+      if (used[el._id]) continue;
+      if (y > 0 && !matchTop(map[pos - n], el)) continue;
+      if (x > 0 && !matchLeft(map[pos - 1], el)) continue;
+      used[el._id] = true;
+      map[pos] = el;
       move(pos + 1);
-      used[e] = false;
+      used[el._id] = false;
     }
   }
   move(0);

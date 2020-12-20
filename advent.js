@@ -146,6 +146,29 @@ function plane(def = undefined, content) {
       }
       return poi;
     }
+    function transform(f) {
+      const p = plane(def);
+      for (const e of entries()) p.set(...f(...e));
+      return p;
+    }
+    function rotate(a = 1) {
+      return transform(
+        [
+          (x, y, v) => [x, y, v],
+          (x, y, v) => [maxY-y, x, v],
+          (x, y, v) => [maxX-x, maxY-y, v],
+          (x, y, v) => [y, maxX-x, v],
+        ][a % 4]
+      )
+    }
+    function * getLine(x, y, dx = 1, dy = 0, len) {
+      for (let i = 0; len === undefined || i < len; i++) {
+        if (x < minX || x > maxX || y < minY || y > maxY) break;
+        yield get(x, y);
+        x += dx;
+        y += dy;
+      }
+    }
     if (content) load(content);
     return ({
       [Symbol.iterator]: entries,
@@ -155,6 +178,12 @@ function plane(def = undefined, content) {
       del,
       maxX: () => maxX,
       maxY: () => maxY,
+      rotate,
+      transform,
+      flipX: () => transform((x, y, v) => [maxX - x, y, v]),
+      flipY: () => transform((x, y, v) => [x, maxY - y, v]),
+      getLine,
+      getLineStr: (x, y, dx = 1, dy = 0, len) => [...getLine(x, y, dx, dy, len)].join(''),
       print: (pad = 0) => {
         for (let j = minY; j <= maxY; j++) {
           const r = [];
@@ -512,6 +541,8 @@ module.exports = {
     neighbor8,
     graph,
     extended_gcd,
+    div: (a, b) => [Math.floor(a / b), a % b],
+    mod: (a, b) => (a % b + b) % b,
 }
 Array.prototype.max = function (f = v => v) { return Math.max(...this.map(f)) };
 Array.prototype.min = function (f = v => v) { return Math.min(...this.map(f)) };
@@ -522,3 +553,10 @@ Array.prototype.freqa = function () { return freqa(this); };
 Array.prototype.sortBy = function (f) { return sort(this, f); };
 Array.prototype.binsearch = function (w, s, e) { return binsearch(this, w, s, e)[0]; };
 Array.prototype.count = function (f) { return this.filter(f).length; };
+Array.prototype.flatten = function () {
+  const r = [];
+  this.forEach(e => {
+    for (const c of e) r.push(c);
+  });
+  return r;
+}
