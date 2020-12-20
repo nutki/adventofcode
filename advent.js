@@ -502,3 +502,12 @@ module.exports = {
     graph,
     extended_gcd,
 }
+Array.prototype.max = function (f = v => v) { return Math.max(...this.map(f)) };
+Array.prototype.min = function (f = v => v) { return Math.min(...this.map(f)) };
+Array.prototype.sum = function (f) { return sum(this, f) };
+Array.prototype.prod = function (f) { return prod(this, f) };
+Array.prototype.freq = function () { return freq(this); };
+Array.prototype.freqa = function () { return freqa(this); };
+Array.prototype.sortBy = function (f) { return sort(this, f); };
+Array.prototype.binsearch = function (w, s, e) { return binsearch(this, w, s, e)[0]; };
+Array.prototype.count = function (f) { return this.filter(f).length; };
