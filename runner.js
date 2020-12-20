@@ -40,7 +40,7 @@ if (create) {
     });
   });
   child.execFile('curl', ['-b', cookies, '-o-',url], (_,text) => {
-    const s = text.matchAll(/<pre><code>([^<]+)<.code><.pre>/);
+    const s = text.matchAll(/<pre><code>([^<]+)<.code><.pre>/g);
     let idx = 0;
     for (const i of s) {
       fs.writeFileSync(`${create}.input.e${++idx}.txt`, i[1]);

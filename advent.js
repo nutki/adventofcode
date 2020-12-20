@@ -183,7 +183,7 @@ function plane(def = undefined, content) {
       flipX: () => transform((x, y, v) => [maxX - x, y, v]),
       flipY: () => transform((x, y, v) => [x, maxY - y, v]),
       getLine,
-      getLineStr: (x, y, dx = 1, dy = 0, len) => [...getLine(x, y, dx, dy, len)].join(''),
+      getLineStr: (...args) => [...getLine(...args)].join(''),
       print: (pad = 0) => {
         for (let j = minY; j <= maxY; j++) {
           const r = [];
