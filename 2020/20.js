@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-const { exit } = require("process");
 const A = require("../advent");
 const l = console.log;
 const content = require("fs").readFileSync("20.input.txt", "utf8");
