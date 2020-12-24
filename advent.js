@@ -178,6 +178,8 @@ function plane(def = undefined, content) {
       del,
       maxX: () => maxX,
       maxY: () => maxY,
+      minX: () => minX,
+      minY: () => minY,
       rotate,
       transform,
       flipX: () => transform((x, y, v) => [maxX - x, y, v]),
