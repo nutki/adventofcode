@@ -7,18 +7,10 @@ const input = A.parse(content, /(.+)/g).map((a) => A.parse(a, /([ew]|..)/g));
 function solve() {
   let p = A.plane(0);
   for (const line of input) {
-    let x = 0,
-      y = 0;
-    for (const d of line) {
-      ({
-        e: () => x++,
-        w: () => x--,
-        ne: () => y++,
-        sw: () => y--,
-        nw: () => { y++; x-- },
-        se: () => { y--; x++ },
-      })[d]();
-    }
+    let s = { e: 0, w: 0, ne: 0, sw: 0, nw: 0, se: 0 };
+    for (const d of line) s[d]++;
+    let x = s.e - s.w - s.nw + s.se;
+    let y = s.ne - s.sw + s.nw - s.se;
     p.set(x, y, 1 - p.get(x, y));
   }
   l([...p].length);
