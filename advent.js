@@ -494,6 +494,8 @@ function graph(dir = true) {
       const t = (n) => visit(v[n].ree.map(([n2, e]) => [t(n2), e, n]), n);
       return t(init);
     },
+    neighbors: (v1) => v[v1].fe,
+    neighborsRev: (v1) => v[v1].re,
     roots, leaves,
     connect,
     desc: () => {
