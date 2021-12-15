@@ -396,6 +396,28 @@ function bfs(init, visit, key) {
   }
   return ({distance, distanceMap, size: qp});
 }
+
+function bfsW(init, visit, key) {
+  if (!key) {
+    key = init instanceof Array ? v => v.join(',') : v => v
+  }
+  const q = heap(k => k[1], [init, 0]);
+  const distanceMap = new Map([[key(init), 0]]);
+  let qp = 0, distance;
+  while (!q.empty()) {
+    const [e, distance] = q.pop();
+    qp++;
+    const a = visit(e, distance);
+    if (a === undefined) break;
+    for (const [n, d] of a) {
+      if (distanceMap.has(key(n))) continue;
+      distanceMap.set(key(n), distance + d);
+      q.push([n, distance + d]);
+    }
+  }
+  return ({distance, distanceMap, size: qp});
+}
+
 function connect(a, b, g1, g2 = g1) {
   if (!g1[a]) g1[a] = [];
   g1[a].push(b);
@@ -486,6 +508,8 @@ function graph(dir = true) {
     vertices,
     bfs: (init, visit) => bfs(init, (e, d) => (visit && visit(e, d) === true ? undefined : v[e].fe)),
     bfsRev: (init, visit) => bfs(init, (e, d) => (visit && visit(e, d) === true ? undefined : v[e].re)),
+    bfsW: (init, visit) => bfsW(init, (e, d) => (visit && visit(e, d) === true ? undefined : v[e].fee)),
+    bfsWRev: (init, visit) => bfsW(init, (e, d) => (visit && visit(e, d) === true ? undefined : v[e].ree)),
     dfsReduce: (init, visit) => {
       const t = (n) => visit(v[n].fee.map(([n2, e]) => [t(n2), e, n]), n);
       return t(init);
@@ -508,6 +532,44 @@ function graph(dir = true) {
       }
     }
   };
+}
+function heap(key = v => v, ...init) {
+  const h = [ null, ...init ];
+  function up() {
+    let pos = h.length - 1;
+    if (pos < 2) return;
+    let kpos = key(h[pos]);
+    while(pos > 1) {
+      const parent = pos/2|0;
+      if (kpos >=  key(h[parent])) break;
+      [h[pos], h[parent]] = [h[parent], h[pos]];
+      pos = parent;
+    }
+  }
+  function down() {
+    let pos = 1;
+    while(pos * 2 < h.length) {
+      const left = pos * 2, right = pos * 2 + 1;
+      const min = right === h.length || key(h[left]) < key(h[right]) ? left : right;
+      if (key(h[min]) >= key(h[pos])) break;
+      [h[pos], h[min]] = [h[min], h[pos]];
+      pos = min;
+    }
+  }
+  return {
+    push: (v) => { h.push(v); up(); },
+    pop: () => {
+      const r = h[1];
+      if (h.length > 2) h[1] = h.pop(); else h.pop();
+      down();
+      return r;
+    },
+    empty: () => h.length === 1,
+  }
+}
+
+class ExtendedMap extends Map {
+  inc(k, v) { this.set(k, (this.get(k)||0)+v) }
 }
 module.exports = {
     seq,
@@ -545,8 +607,11 @@ module.exports = {
     neighbor8,
     graph,
     extended_gcd,
+    heap,
+    bfsW,
     div: (a, b) => [Math.floor(a / b), a % b],
     mod: (a, b) => (a % b + b) % b,
+    Map: ExtendedMap,
 }
 Array.prototype.max = function (f = v => v) { return Math.max(...this.map(f)) };
 Array.prototype.min = function (f = v => v) { return Math.min(...this.map(f)) };
