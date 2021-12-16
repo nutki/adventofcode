@@ -169,6 +169,16 @@ function plane(def = undefined, content) {
         y += dy;
       }
     }
+    function toGraph(w) {
+      const g = graph();
+      const f = (x,y) => y*1000 + x;
+      for (const [x1, y1, c] of entries()) {
+        for (const [x2, y2] of neighbor4(x1,y1)) {
+          if (get(x2, y2) !== def) g.connect(f(x1,y1), f(x2,y2), w?.({x1,y1,x2,y2}));
+        }
+      }
+      return g;
+    }
     if (content) load(content);
     return ({
       [Symbol.iterator]: entries,
@@ -186,6 +196,7 @@ function plane(def = undefined, content) {
       flipY: () => transform((x, y, v) => [x, maxY - y, v]),
       getLine,
       getLineStr: (...args) => [...getLine(...args)].join(''),
+      graph: toGraph,
       print: (pad = 0) => {
         for (let j = minY; j <= maxY; j++) {
           const r = [];
@@ -403,9 +414,9 @@ function bfsW(init, visit, key) {
   }
   const q = heap(k => k[1], [init, 0]);
   const distanceMap = new Map([[key(init), 0]]);
-  let qp = 0, distance;
+  let qp = 0, distance, e;
   while (!q.empty()) {
-    const [e, distance] = q.pop();
+    [e, distance] = q.pop();
     qp++;
     const a = visit(e, distance);
     if (a === undefined) break;
