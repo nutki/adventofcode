@@ -12,7 +12,11 @@ function solve() {
     const p2 = A.plane(input0[p.get(-1000,-1000) === '.' ? 0 : 511]);
     for (let i = p.minX()-1; i <= p.maxX()+1; i++) {
       for (let j = p.minY()-1; j <= p.maxY()+1; j++) {
-        const idxn = [...p.getLineDef(i-1,j-1,1,0,3),...p.getLineDef(i-1,j,1,0,3),...p.getLineDef(i-1,j+1,1,0,3)].reduce((p, n) => p+p+(n==='#'), 0);
+        const idxn = [
+          ...p.getLineDef(i-1,j-1,1,0,3),
+          ...p.getLineDef(i-1,j,1,0,3),
+          ...p.getLineDef(i-1,j+1,1,0,3)
+        ].reduce((p, n) => p+p+(n==='#'), 0);
         p2.set(i,j,input0[idxn]);
         if (input0[idxn] === '#') cnt++;
       }
