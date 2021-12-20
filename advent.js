@@ -161,18 +161,9 @@ function plane(def = undefined, content) {
         ][a % 4]
       )
     }
-    function * getLine(x, y, dx = 1, dy = 0, len) {
+    function * getLine(x, y, dx = 1, dy = 0, len, stop = true) {
       for (let i = 0; len === undefined || i < len; i++) {
-        if (x < minX || x > maxX || y < minY || y > maxY) break;
-        yield get(x, y);
-        x += dx;
-        y += dy;
-      }
-    }
-    function * getLineDef(x, y, dx = 1, dy = 0, len) {
-      for (let i = 0; len === undefined || i < len; i++) {
-        if (x < minX || x > maxX || y < minY || y > maxY) yield def;
-        else
+        if (stop && (x < minX || x > maxX || y < minY || y > maxY)) break;
         yield get(x, y);
         x += dx;
         y += dy;
@@ -205,7 +196,6 @@ function plane(def = undefined, content) {
       flipY: () => transform((x, y, v) => [x, maxY - y, v]),
       getLine,
       getLineStr: (...args) => [...getLine(...args)].join(''),
-      getLineDef,
       graph: toGraph,
       print: (pad = 0) => {
         for (let j = minY; j <= maxY; j++) {
