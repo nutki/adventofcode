@@ -12,20 +12,6 @@ static int cnt1, cnt2;
 static void _read() {
     inputsize = read(0,input,sizeof(input));
 }
-/*
-507 493
-268 233
-141 106
-79 48
-40 23
-21 8
-11 2
-7 1
-4 1
-2 1
-1 1
-1 1
-*/
 #define SWAP(a,b) { __typeof__(a) temp; temp = a; a = b; b = temp; }
 static int data[4000],di,bitc[20];
 static void _main() {

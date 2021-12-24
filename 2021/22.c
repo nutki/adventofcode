@@ -44,13 +44,9 @@ static long volume(struct cube*c) {
   return (long)(c->x2 - c->x1 + 1) * (c->y2 - c->y1 + 1) * (c->z2 - c->z1 + 1);
 }
 
-static int data[100000], di = 0;
-static struct cubesel {
-    int on;
-    struct cube c;
-} cubes[200*2000];
+static int data[500*7], di = 0;
+static struct cubesel { int on; struct cube c; } cubes[500*500];
 static int ci = 0;
-
 
 static long substract(struct cube *c) {
     long sum = 0;
