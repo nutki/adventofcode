@@ -12,11 +12,11 @@ function onExit() {
   run = undefined;
 }
 notify.stdout.on('data', (buffer) => {
-  const x = buffer.toString().match(/(\S+) \S+ ((\d+)?\.(js|pl|c))\n/);
+  const x = buffer.toString().match(/(\S+) \S+ ((\d+)?\.(js|pl|c|cpp))\n/);
   if (!x) return;
   const name = x[1]+x[2];
   const input = `${x[3]}.input.txt`
-  const bin = { js: 'node', pl: 'perl', c: '../runc'}[x[4]];
+  const bin = { js: 'node', pl: 'perl', c: '../runc', cpp: '../runc'}[x[4]];
   url = year ? ` https://adventofcode.com/${year}/day/${x[3]}` : '';
   if (run !== undefined) {
     run.off('exit', onExit);

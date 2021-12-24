@@ -1,5 +1,5 @@
-#!/bin/sh
-EXE=`basename -s.c $1`
+#!/bin/bash
+EXE="${1%.*}"
 make $EXE
 ./$EXE < $EXE.input.txt > out.tmp
 cat out.tmp

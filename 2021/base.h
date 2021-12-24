@@ -24,7 +24,7 @@ static struct timespec diff(struct timespec start, struct timespec end)
     return temp;
 }
 
-static void timeme(char *step_name, void f()) {
+static void timeme(const char *step_name, void f()) {
     struct timespec time1, time2;
     uint64_t start = rdtsc();
     clock_gettime(CLOCK_MONOTONIC, &time1);
