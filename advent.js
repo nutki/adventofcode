@@ -408,22 +408,28 @@ function bfs(init, visit, key) {
   return ({distance, distanceMap, size: qp});
 }
 
-function bfsW(init, visit, key) {
+function bfsW(init, visit, key, h = () => 0) {
   if (!key) {
     key = init instanceof Array ? v => v.join(',') : v => v
   }
-  const q = heap(k => k[1], [init, 0]);
+  const q = heap(k => k[1], [init, h(init)]);
   const distanceMap = new Map([[key(init), 0]]);
+  const done = new Set()
   let qp = 0, distance, e;
   while (!q.empty()) {
-    [e, distance] = q.pop();
+    [e] = q.pop();
     qp++;
+    distance = distanceMap.get(key(e));
     const a = visit(e, distance);
     if (a === undefined) break;
     for (const [n, d] of a) {
-      if (distanceMap.has(key(n))) continue;
-      distanceMap.set(key(n), distance + d);
-      q.push([n, distance + d]);
+      const tentative_gscore = distance + d;
+      if (distanceMap.has(key(n)) && distanceMap.get(key(n)) <= tentative_gscore) continue;
+      if (distanceMap.has(key(n))) {
+        q.remove(x => x[0] === n);
+      }
+      distanceMap.set(key(n), tentative_gscore);
+      q.push([n, tentative_gscore + h(n)]);
     }
   }
   return ({distance, distanceMap, size: qp});
@@ -484,7 +490,7 @@ function range(n) {
 }
 function sum(a, f = x => x) {
   let s = 0, i = 0;
-  for (const v of a) s += f(v, i++);
+  for (const v of a) s += Number(f(v, i++));
   return s;
 }
 function prod(a, f = x => x) {
@@ -557,8 +563,7 @@ function heap(key = v => v, ...init) {
       pos = parent;
     }
   }
-  function down() {
-    let pos = 1;
+  function down(pos = 1) {
     while(pos * 2 < h.length) {
       const left = pos * 2, right = pos * 2 + 1;
       const min = right === h.length || key(h[left]) < key(h[right]) ? left : right;
@@ -576,6 +581,16 @@ function heap(key = v => v, ...init) {
       return r;
     },
     empty: () => h.length === 1,
+    remove: (f) => {
+      for (let i = 1; i < h.length; i++) {
+        if (f(h[i])) {
+          if (h.length > i+1) h[i] = h.pop(); else h.pop();
+          down(i);
+          return;
+        }
+      }
+    },
+    h,
   }
 }
 
