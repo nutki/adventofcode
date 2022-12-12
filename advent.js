@@ -190,6 +190,8 @@ function plane(def = undefined, content) {
       maxY: () => maxY,
       minX: () => minX,
       minY: () => minY,
+      get width() { return maxX - minX + 1; },
+      get height() { return maxY - minY + 1; },
       rotate,
       transform,
       flipX: () => transform((x, y, v) => [maxX - x, y, v]),
@@ -197,7 +199,8 @@ function plane(def = undefined, content) {
       getLine,
       getLineStr: (...args) => [...getLine(...args)].join(''),
       graph: toGraph,
-      print: (pad = 0) => {
+      toString: (pad = 0) => {
+        const lines = [];
         for (let j = minY; j <= maxY; j++) {
           const r = [];
           for (let i = minX; i <= maxX; i++) {
@@ -209,8 +212,12 @@ function plane(def = undefined, content) {
                 t = '\033[44m' + t + '\033[0m';
             r.push(t);
           }
-          console.log(r.join(''));
+          lines.push(r.join('') + '\n');
         }
+        return lines.join('');
+      },
+      print: function(pad) {
+        console.log(this.toString(pad));
       },
       cursor: (x = 0, y = 0, heading = 0) => {
         const getRel = (rx, ry) => {
