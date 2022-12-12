@@ -6,9 +6,14 @@ let run = undefined;
 let timeStart = undefined;
 let year = process.cwd().match(/\/(20\d\d)$|$/)[1];
 let create = process.argv[2];
+const runnerStatedAt = Date.now();
 console.log(year);
 function onExit() {
-  console.log('\033[37;1mDone ' + (Date.now()-timeStart)/1000 + 's\033[0m');
+  const elapsedSec = Math.floor((Date.now() - runnerStatedAt) / 1000);
+  const elapsedMText = Math.floor(elapsedSec/60).toString().padStart(2, '0');
+  const elapsedSText = (elapsedSec%60).toString().padStart(2, '0');
+  const elapsedText = ` at ${elapsedMText}:${elapsedSText}`;
+  console.log('\033[37;1mDone ' + (Date.now()-timeStart)/1000 + 's\033[0m' + elapsedText);
   run = undefined;
 }
 notify.stdout.on('data', (buffer) => {
@@ -32,7 +37,7 @@ notify.on('error', (...ev) => {
 });
 if (create) {
   console.log("Creating template for day",create);
-  const cookies = fs.readFileSync('cookies','utf8');
+  const cookies = fs.readFileSync('../cookies','utf8');
   const url = 'https://adventofcode.com/'+year+'/day/'+create;
   child.execFile('curl', ['-b', cookies, '-o',create+'.input.txt',url+'/input'], () => {
     child.execFile('../templates.pl', [create], () => {
