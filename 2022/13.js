@@ -13,7 +13,7 @@ const cmp = (a, b) => {
   }
   return a.length - b.length;
 }
-const input = A.parse(content, /(.+)\n(.+)/g).map(x => x.map(eval));
+const input = A.parse(content, /(.+)\n(.+)/g).map(x => x.map(x => JSON.parse(x)));
 function solve() {
   return [
     input.map((p, i) => cmp(...p) < 0 ? i+1 : 0).sum(),
