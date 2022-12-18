@@ -511,6 +511,9 @@ function neighbor4(x = 0, y = 0) {
 function neighbor8(x = 0, y = 0) {
   return [[x,y+1],[x,y-1],[x+1,y],[x-1,y],[x+1,y+1],[x-1,y-1],[x-1,y+1],[x+1,y-1]];
 }
+function neighbor3d6(x = 0, y = 0, z = 0) {
+  return [[x - 1, y, z], [x + 1, y, z], [x, y + 1, z], [x, y - 1, z], [x, y, z + 1], [x, y, z - 1]];
+}
 function graph(dir = true) {
   const v = {};
   let ne = 0;
@@ -638,6 +641,7 @@ module.exports = {
     prod,
     neighbor4,
     neighbor8,
+    neighbor3d6,
     graph,
     extended_gcd,
     heap,
