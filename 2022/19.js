@@ -11,10 +11,10 @@ function solve(part2) {
     const limita = Math.max(aa,ba,ca,da);
     const tick = (ar,br,cr,dr,a,b,c,d,t) => {
       const tta = Math.ceil(Math.max(aa - a, 0) / ar) + 1;
-      if (t>tta && ar < limita) tick(ar+1,br,cr,dr,a-aa+ar*tta,b+br*tta,c+cr*tta,d+dr*tta, t-tta);
+      if (t>tta && ar + a/t < limita) tick(ar+1,br,cr,dr,a-aa+ar*tta,b+br*tta,c+cr*tta,d+dr*tta, t-tta);
       const ttb = Math.ceil(Math.max(ba - a, 0) / ar) + 1;
-      if (t>ttb && br < cb) tick(ar,br+1,cr,dr,a-ba+ar*ttb,b+br*ttb,c+cr*ttb,d+dr*ttb, t-ttb);
-      if (br && cr < dc) {
+      if (t>ttb && br + b/t < cb) tick(ar,br+1,cr,dr,a-ba+ar*ttb,b+br*ttb,c+cr*ttb,d+dr*ttb, t-ttb);
+      if (br && cr + c/t < dc) {
         const ttc = A.max(Math.ceil(Math.max(ca - a, 0) / ar), Math.ceil(Math.max(cb - b, 0) / br)) + 1;
         if (t>ttc) tick(ar,br,cr+1,dr,a-ca+ar*ttc,b-cb+br*ttc,c+cr*ttc,d+dr*ttc, t - ttc);  
       }
